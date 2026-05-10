@@ -55,7 +55,7 @@ public class GazellaDbContext : DbContext
                 {
                     comment.Property(c => c.Id).HasElementName("id").HasMaxLength(36);
                     comment.Property(c => c.AuthorId).HasElementName("author_id").HasMaxLength(36);
-                    comment.Property(c => c.AuthorName).HasElementName("author_name").HasMaxLength(64);
+                    comment.Property(c => c.AuthorName).HasElementName("author_name").HasMaxLength(128);
                     comment.Property(c => c.AuthorProfilePictureUri).HasElementName("author_profile_picture_uri").HasMaxLength(256);
                     comment.Property(c => c.Content).HasElementName("content").HasMaxLength(1000);
                     comment.Property(c => c.PostedAt).HasElementName("posted_at");

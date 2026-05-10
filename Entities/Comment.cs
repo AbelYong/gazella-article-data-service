@@ -1,6 +1,8 @@
+using ArticleService.Entities.Interfaces;
+
 namespace ArticleService.Entities;
 
-public class Comment
+public class Comment : IComment
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string ArticleId { get; set; } = string.Empty;

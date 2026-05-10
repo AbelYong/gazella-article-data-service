@@ -3,10 +3,15 @@ using ArticleService.Data.Repositories;
 using ArticleService.Data.Repositories.Implementations;
 using Microsoft.EntityFrameworkCore;
 using ArticleService.Services;
+using ArticleService.Services.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddGrpc();
+builder.Services.AddGrpc(options =>
+{
+    options.Interceptors.Add<ExceptionInterceptor>();
+});
+
 var mongoConnectionString = builder.Configuration.GetConnectionString("MongoDb");
 var mongoDbName = builder.Configuration.GetValue<string>("MongoDbName");
 
@@ -16,6 +21,7 @@ builder.Services.AddDbContext<GazellaDbContext>(options =>
 
 builder.Services.AddScoped<IDraftRepository, DraftRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IArticlesRepository, ArticleRepository>();
 
 var app = builder.Build();
 

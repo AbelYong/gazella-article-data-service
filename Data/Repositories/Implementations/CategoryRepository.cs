@@ -12,7 +12,7 @@ public class CategoryRepository(GazellaDbContext context, ILogger<CategoryReposi
     {
         try
         {
-            var category = await context.Categories.FindAsync(categoryId);
+            var category = await context.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Id == categoryId);
             if (category != null)
             {
                 return category;

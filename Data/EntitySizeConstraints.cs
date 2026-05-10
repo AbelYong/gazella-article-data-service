@@ -9,7 +9,7 @@ public static class EntitySizeConstraints
     public static readonly int ArticleSummaryMaxLength = 500;
     public static readonly int ArticleCategoryMaxLength = 64;
     
-    public static readonly int AuthorNameMaxLength = 64;
+    public static readonly int AuthorNameMaxLength = 128;
     public static readonly int AuthorProfilePictureUriMaxLength = 256;
     
     public static readonly int CategoryNameMaxLength = 64;

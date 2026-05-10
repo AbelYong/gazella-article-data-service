@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using MongoDB.Bson;
+using System.ComponentModel.DataAnnotations.Schema;
+using ArticleService.Entities.Interfaces;
 
 namespace ArticleService.Entities;
 
-public class Article
+public class Article : IArticle
 {
     [MaxLength(36)]
     public string Id { get; init; } = Guid.NewGuid().ToString();
@@ -18,11 +19,30 @@ public class Article
     public DateTime? PublishedAt { get; set; }
     public DateTime? LastUpdatedAt { get; set; }
     public ArticleStatus Status { get; set; } = ArticleStatus.Draft;
-        
-    public Author Author { get; set; } = null!;
+    public string Content { get; set; } = string.Empty;
+    public required Author Author { get; set; }
     public Review? ReviewMetadata { get; set; }
     public Metrics Metrics { get; set; } = new();
-    public string Content { get; set; } = string.Empty;
-        
-    public List<RecentComment> RecentComments { get; set; } = new();
+    public List<RecentComment> RecentComments { get; set; } = new List<RecentComment>();
+    
+    [NotMapped]
+    public string AuthorId => Author.Id;
+    [NotMapped]
+    public string? AuthorName => Author.Name;
+    [NotMapped]
+    public string? AuthorProfilePictureUri => Author.ProfilePictureUri;
+    [NotMapped]
+    public string? RejectionReason => ReviewMetadata?.RejectionReason;
+    [NotMapped]
+    public string? ReviewedById => ReviewMetadata?.ReviewedById;
+    [NotMapped]
+    public DateTime? ReviewedAt => ReviewMetadata?.ReviewedAt;
+    [NotMapped]
+    public int Views => Metrics.Views;
+    [NotMapped]
+    public int Likes => Metrics.Likes;
+    [NotMapped]
+    public int CommentsCount => Metrics.CommentsCount;
+    [NotMapped]
+    public IEnumerable<IRecentComment> Comments => RecentComments;
 }

@@ -1,6 +1,8 @@
+using ArticleService.Entities.Interfaces;
+
 namespace ArticleService.Entities;
 
-public class RecentComment
+public class RecentComment : IRecentComment
 {
     public string Id { get; set; } = string.Empty;
     public string AuthorId { get; set; } = string.Empty;

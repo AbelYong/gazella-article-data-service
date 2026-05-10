@@ -1,5 +1,4 @@
 using Grpc.Core;
-using ArticleService.Data.Exceptions;
 using ArticleService.Data.Repositories;
 using ArticleService.Entities;
 using ArticleService.Protos;
@@ -9,55 +8,92 @@ using ArticleService.Services.MessageValidators;
 
 namespace ArticleService.Services;
 
-public class DraftService(IDraftRepository draftRepository, ICategoryRepository categoryRepository, ILogger<DraftService> logger) 
+public class DraftService(IDraftRepository draftRepository, ICategoryRepository categoryRepository) 
     : Protos.DraftService.DraftServiceBase
 {
     public override async Task<SubmitDraftResponse> SubmitDraft(SubmitDraftRequest request, ServerCallContext context)
     {
-        try
-        {
-            DraftValidator.ValidateSubmitDraftRequest(request);
-            var category =
-                await GazellaValidator.VerifyExistingCategory(categoryRepository, request.CategoryId);
+        DraftValidator.ValidateSubmitDraftRequest(request);
+        var category = await GazellaValidator.VerifyExistingCategory(categoryRepository, request.CategoryId);
 
-            var draft = new Article
+        var draft = new Article
+        {
+            Title = request.Title,
+            CoverUri = request.CoverUri,
+            Summary = request.Summary,
+            Category = category.Name,
+            Author = new Author
             {
-                Title = request.Title,
-                CoverUri = request.CoverUri,
-                Summary = request.Summary,
-                Category = category.Name,
-                Author = new Author
-                {
-                    Id = request.AuthorId
-                },
-                Content = request.Content
-            };
+                Id = request.AuthorId
+            },
+            Content = request.Content
+        };
             
-            var draftId = await draftRepository.SaveDraft(draft);
+        var draftId = await draftRepository.SaveDraft(draft);
 
-            return new SubmitDraftResponse
-            {
-                ArticleId = draftId,
-                Message = "Draft submitted successfully"
-            };
-        }
-        catch (GazellaDomainException ex)
+        return new SubmitDraftResponse
         {
-            var metadata = new Metadata { {"x-gazella-error", "invalid_argument"} };
-            throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Issues), metadata);
-        }
-        catch (GazellaDbException)
+            ArticleId = draftId,
+            Message = "Draft submitted successfully"
+        };
+    }
+
+    public override async Task<UpdateDraftResponse> UpdateDraft(UpdateDraftRequest request, ServerCallContext context)
+    {
+        DraftValidator.ValidateUpdateDraftRequest(request);
+        var category = await GazellaValidator.VerifyExistingCategory(categoryRepository, request.CategoryId);
+        var existingDraft = await draftRepository.GetExistingDraft(request.DraftId);
+
+        if (existingDraft.Status.Equals(ArticleStatus.UnderReview))
         {
-            var metadata = new Metadata { {"x-gazella-error", "db_unavailable"} };
-            throw new RpcException(new Status(
-                StatusCode.Unavailable, 
-                "The database is not available, it took to long to respond or another internal issue"),
-                metadata);
+            throw new GazellaDomainException("Drafts under review cannot be updated");
         }
-        catch (Exception ex)
+
+        if (existingDraft is not Article updatedDraft)
         {
-            logger.LogError(ex, "Unexpected exception while processing draft submission: {Ex}", ex.Message);
-            throw new RpcException(new Status(StatusCode.Internal, "Internal Server Error"));
+            throw new GazellaDomainException($"No draft was found for id: {request.DraftId}");
         }
+        
+        updatedDraft.Title = request.Title;
+        updatedDraft.CoverUri = request.CoverUri;
+        updatedDraft.Summary = request.Summary;
+        updatedDraft.Category = category.Name;
+        updatedDraft.Content = request.Content;
+            
+        await draftRepository.UpdateDraft(updatedDraft);
+
+        return new UpdateDraftResponse
+        {
+            IsSuccess = true,
+            Message = "Draft successfully updated"
+        };
+    }
+
+    public override async Task<PublishDraftResponse> PublishDraft(PublishDraftRequest request, ServerCallContext context)
+    {
+        DraftValidator.ValidatePublishDraftRequest(request);
+        var category = await GazellaValidator.VerifyExistingCategory(categoryRepository, request.CategoryId);
+        var existingDraft = await draftRepository.GetExistingDraft(request.DraftId);
+            
+        if (existingDraft is not Article toPublish)
+        {
+            throw new GazellaDomainException($"No draft was found for id: {request.DraftId}");
+        }
+
+        toPublish.Title = request.Title;
+        toPublish.CoverUri = request.CoverUri;
+        toPublish.Summary = request.Summary;
+        toPublish.Category = category.Name;
+        toPublish.Author.Name = request.AuthorName;
+        toPublish.Author.ProfilePictureUri = request.AuthorPfpUri;
+        toPublish.Content = request.Content;
+
+        var status = await draftRepository.SaveDraftPublication(toPublish);
+
+        return new PublishDraftResponse
+        {
+            ArticleStatus = status,
+            Message = "Draft successfully published"
+        };
     }
 }
