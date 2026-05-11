@@ -8,7 +8,9 @@ public class ExceptionInterceptor(ILogger<ExceptionInterceptor> logger) : Interc
 {
     private const string GazellaError = "x-gazella-error";
     private const string InvalidArgument = "invalid_argument";
+    private const string InvalidOperation = "invalid_operation";
     private const string DbUnavailable = "db_unavailable";
+    private const string NotFound = "not_found";
 
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
@@ -19,10 +21,20 @@ public class ExceptionInterceptor(ILogger<ExceptionInterceptor> logger) : Interc
         {
             return await continuation(request, context);
         }
-        catch (GazellaDomainException ex)
+        catch (GazellaValidationException ex)
         {
             var metadata = new Metadata { { GazellaError, InvalidArgument } };
             throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Issues), metadata);
+        }
+        catch (GazellaInvalidOperationException ex)
+        {
+            var metadata = new Metadata { { GazellaError, InvalidOperation } };
+            throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message), metadata);
+        }
+        catch (GazellaNotFoundException ex)
+        {
+            var metadata = new Metadata { { GazellaError, NotFound } };
+            throw new RpcException(new Status(StatusCode.NotFound, ex.Message), metadata);
         }
         catch (GazellaDbException)
         {
@@ -36,7 +48,6 @@ public class ExceptionInterceptor(ILogger<ExceptionInterceptor> logger) : Interc
         }
         catch (Exception ex)
         {
-            // El logger ahora captura el nombre del método gRPC que falló a través del context
             logger.LogError(ex, "Unexpected exception while processing {Method}: {Ex}", context.Method, ex.Message);
             throw new RpcException(new Status(StatusCode.Internal, "Internal Server Error"));
         }

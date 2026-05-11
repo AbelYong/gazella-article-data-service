@@ -44,14 +44,14 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
         var category = await GazellaValidator.VerifyExistingCategory(categoryRepository, request.CategoryId);
         var existingDraft = await draftRepository.GetExistingDraft(request.DraftId);
 
-        if (existingDraft.Status.Equals(ArticleStatus.UnderReview))
+        if (existingDraft.Status == ArticleStatus.UnderReview)
         {
-            throw new GazellaDomainException("Drafts under review cannot be updated");
+            throw new GazellaInvalidOperationException("Drafts under review cannot be updated");
         }
 
         if (existingDraft is not Article updatedDraft)
         {
-            throw new GazellaDomainException($"No draft was found for id: {request.DraftId}");
+            throw new GazellaNotFoundException($"No draft was found for id: {request.DraftId}");
         }
         
         updatedDraft.Title = request.Title;
@@ -77,7 +77,7 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
             
         if (existingDraft is not Article toPublish)
         {
-            throw new GazellaDomainException($"No draft was found for id: {request.DraftId}");
+            throw new GazellaNotFoundException($"No draft was found for id: {request.DraftId}");
         }
 
         toPublish.Title = request.Title;

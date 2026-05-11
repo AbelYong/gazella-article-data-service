@@ -11,7 +11,7 @@ public static class DraftValidator
     /// Validates the first submission of a draft
     /// </summary>
     /// <param name="request"></param>
-    /// <exception cref="GazellaDomainException">Thrown if there is at least one issue with the request's data</exception>
+    /// <exception cref="GazellaValidationException">Thrown if there is at least one issue with the request's data</exception>
     public static void ValidateSubmitDraftRequest(SubmitDraftRequest request)
     {
         var issues = new List<string>();
@@ -35,7 +35,7 @@ public static class DraftValidator
 
         if (issues.Count > 0)
         {
-            throw new GazellaDomainException(ExceptionUtil.IssueStringify(issues));
+            throw new GazellaValidationException(ExceptionUtil.IssueStringify(issues));
         }
     }
 
@@ -43,7 +43,7 @@ public static class DraftValidator
     /// Validates an update to an existing draft
     /// </summary>
     /// <param name="request"></param>
-    /// <exception cref="GazellaDomainException">Thrown if there is at least one issue with the request's data</exception>
+    /// <exception cref="GazellaValidationException">Thrown if there is at least one issue with the request's data</exception>
     public static void ValidateUpdateDraftRequest(UpdateDraftRequest request)
     {
         var issues = new List<string>();
@@ -67,7 +67,7 @@ public static class DraftValidator
         
         if (issues.Count > 0)
         {
-            throw new GazellaDomainException(ExceptionUtil.IssueStringify(issues));
+            throw new GazellaValidationException(ExceptionUtil.IssueStringify(issues));
         }
     }
 
@@ -100,7 +100,7 @@ public static class DraftValidator
         
         if (issues.Count > 0)
         {
-            throw new GazellaDomainException(ExceptionUtil.IssueStringify(issues));
+            throw new GazellaValidationException(ExceptionUtil.IssueStringify(issues));
         }
     }
     

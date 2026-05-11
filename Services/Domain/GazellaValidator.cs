@@ -28,6 +28,6 @@ public static class GazellaValidator
     {
         var category = await repository.GetCategoryById(categoryId);
 
-        return category as Category ?? throw new GazellaDomainException("Category not found");
+        return category as Category ?? throw new GazellaValidationException("Category not found");
     }
 }
