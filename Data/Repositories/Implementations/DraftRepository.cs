@@ -35,11 +35,17 @@ public class DraftRepository(GazellaDbContext context, ILogger<DraftRepository> 
         }
     }
 
+    /// <summary>
+    /// Returns an article tracked by the context.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="GazellaDbException"></exception>
     public async Task<IArticle> GetExistingDraft(string id)
     {
         try
         {
-            var draft = await context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+            var draft = await context.Articles.FirstOrDefaultAsync(a => a.Id == id);
             
             if (draft != null)
             {
@@ -59,12 +65,20 @@ public class DraftRepository(GazellaDbContext context, ILogger<DraftRepository> 
         }
     }
     
+    /// <summary>
+    /// Updates the existing article, this method should NOT be called if the Status has been modified
+    /// </summary>
+    /// <param name="draft"></param>
+    /// <exception cref="GazellaDbException"></exception>
     public async Task UpdateDraft(Article draft)
     {
         try
         {
-            context.Articles.Update(draft);
-            await context.SaveChangesAsync();
+            await using (context)
+            {
+                context.Articles.Update(draft);
+                await context.SaveChangesAsync();
+            }
         }
         catch (Exception ex) when (ex.InnerException is MongoConnectionException || ex is TimeoutException)
         {
@@ -83,13 +97,23 @@ public class DraftRepository(GazellaDbContext context, ILogger<DraftRepository> 
         }
     }
 
+    /// <summary>
+    /// Updates an article and sets it as UnderReview, requires the article to be tracked by the context
+    /// </summary>
+    /// <param name="draft"></param>
+    /// <returns></returns>
+    /// <exception cref="GazellaDbException"></exception>
     public async Task<string> SaveDraftPublication(Article draft)
     {
         try
         {
             draft.Status = ArticleStatus.UnderReview;
-            context.Articles.Update(draft);
-            await context.SaveChangesAsync();
+
+            await using (context)
+            {
+                context.Articles.Update(draft);
+                await context.SaveChangesAsync();
+            }
 
             return draft.Status.ToString();
         }

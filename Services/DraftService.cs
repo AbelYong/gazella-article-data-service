@@ -26,7 +26,8 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
             {
                 Id = request.AuthorId
             },
-            Content = request.Content
+            Content = request.Content,
+            LastUpdatedAt = DateTime.UtcNow
         };
             
         var draftId = await draftRepository.SaveDraft(draft);
@@ -59,6 +60,7 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
         updatedDraft.Summary = request.Summary;
         updatedDraft.Category = category.Name;
         updatedDraft.Content = request.Content;
+        updatedDraft.LastUpdatedAt = DateTime.UtcNow;
             
         await draftRepository.UpdateDraft(updatedDraft);
 
@@ -87,6 +89,7 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
         toPublish.Author.Name = request.AuthorName;
         toPublish.Author.ProfilePictureUri = request.AuthorPfpUri;
         toPublish.Content = request.Content;
+        toPublish.LastUpdatedAt = DateTime.UtcNow;
 
         var status = await draftRepository.SaveDraftPublication(toPublish);
 

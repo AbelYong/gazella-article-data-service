@@ -6,7 +6,7 @@ using MongoDB.Driver;
 
 namespace ArticleService.Data.Repositories.Implementations;
 
-public class ArticleRepository(GazellaDbContext context, ILogger<CategoryRepository> logger) : IArticlesRepository
+public class ArticleRepository(GazellaDbContext context, ILogger<CategoryRepository> logger) : IArticleRepository
 {
     public async Task<IEnumerable<IArticle>> GetArticlesByAuthorId(string authorId)
     {
@@ -29,6 +29,30 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected exception while querying articles by author Id: {Ex}", ex.Message);
+            throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
+        }
+    }
+
+    public async Task<IArticle> GetArticleById(string id)
+    {
+        try
+        {
+            var article =  await context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+
+            if (article != null)
+            {
+                return article;
+            }
+            return new NullArticle();
+        }
+        catch (Exception ex) when (ex.InnerException is MongoConnectionException || ex is TimeoutException)
+        {
+            logger.LogError(ex, "Connection exception while retrieving article by Id {Ex}", ex.Message);
+            throw new GazellaDbException(ex.Message, ex);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected exception while retrieving article by Id: {Ex}", ex.Message);
             throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
         }
     }

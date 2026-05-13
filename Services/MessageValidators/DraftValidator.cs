@@ -20,10 +20,10 @@ public static class DraftValidator
         ValidateTitle(issues, request.Title);
         
         request.AuthorId = request.AuthorId.Trim();
-        ValidateId(issues, request.AuthorId, "AuthorId");
+        GeneralValidator.ValidateId(issues, request.AuthorId, "AuthorId");
         
         request.CategoryId = request.CategoryId.Trim();
-        ValidateId(issues,  request.CategoryId, "CategoryId");
+        GeneralValidator.ValidateId(issues,  request.CategoryId, "CategoryId");
         
         request.CoverUri = request.CoverUri.Trim();
         ValidateCoverUri(issues, request.CoverUri);
@@ -49,7 +49,7 @@ public static class DraftValidator
         var issues = new List<string>();
         
         request.DraftId = request.DraftId.Trim();
-        ValidateId(issues, request.DraftId,  "DraftId");
+        GeneralValidator.ValidateId(issues, request.DraftId,  "DraftId");
         
         request.Title = request.Title.Trim();
         ValidateTitle(issues, request.Title);
@@ -61,7 +61,7 @@ public static class DraftValidator
         ValidateSummary(issues, request.Summary);
         
         request.CategoryId = request.CategoryId.Trim();
-        ValidateId(issues, request.CategoryId, "CategoryId");
+        GeneralValidator.ValidateId(issues, request.CategoryId, "CategoryId");
         
         ValidateContent(issues, request.Content);
         
@@ -76,7 +76,7 @@ public static class DraftValidator
         var issues = new List<string>();
         
         request.DraftId = request.DraftId.Trim();
-        ValidateId(issues, request.DraftId,  "DraftId");
+        GeneralValidator.ValidateId(issues, request.DraftId,  "DraftId");
         
         request.Title = request.Title.Trim();
         ValidateTitle(issues, request.Title);
@@ -88,7 +88,7 @@ public static class DraftValidator
         ValidateSummary(issues, request.Summary);
         
         request.CategoryId = request.CategoryId.Trim();
-        ValidateId(issues, request.CategoryId, "CategoryId");
+        GeneralValidator.ValidateId(issues, request.CategoryId, "CategoryId");
         
         request.AuthorName = request.AuthorName.Trim();
         ValidateAuthorName(issues, request.AuthorName);
@@ -113,18 +113,6 @@ public static class DraftValidator
         else if (title.Length > EntitySizeConstraints.ArticleTitleMaxLength)
         {
             issues.Add($"Title is too long, max length is {EntitySizeConstraints.ArticleTitleMaxLength}");
-        }
-    }
-
-    private static void ValidateId(List<string> issues, string id, string idName)
-    {
-        if (string.IsNullOrEmpty(id))
-        {
-            issues.Add($"{idName} is required");
-        }
-        else if (!Guid.TryParse(id, out _))
-        {
-            issues.Add($"{idName} is not valid UUID");
         }
     }
     

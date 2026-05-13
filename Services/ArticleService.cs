@@ -4,7 +4,7 @@ using Grpc.Core;
 
 namespace ArticleService.Services;
 
-public class ArticleService(IArticlesRepository articlesRepository, ICategoryRepository categoryRepository) 
+public class ArticleService(IArticleRepository articleRepository, ICategoryRepository categoryRepository) 
     : Protos.ArticleService.ArticleServiceBase
 {
     public override async Task<GetCategoriesResponse> GetCategories(GetCategoriesRequest request, ServerCallContext context)
@@ -29,7 +29,7 @@ public class ArticleService(IArticlesRepository articlesRepository, ICategoryRep
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided Id is not a valid UUID"));
         }
         
-        var articles = await articlesRepository.GetArticlesByAuthorId(request.Id);
+        var articles = await articleRepository.GetArticlesByAuthorId(request.Id);
 
         var response = new GetMyArticlesResponse();
         

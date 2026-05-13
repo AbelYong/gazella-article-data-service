@@ -28,7 +28,8 @@ public class GazellaDbContext : DbContext
                 
                 entity.Property(a => a.Status)
                       .HasConversion<string>()
-                      .HasElementName("status");
+                      .HasElementName("status")
+                      .IsConcurrencyToken();
 
                 entity.OwnsOne(a => a.Author, author => 
                 {
@@ -39,9 +40,10 @@ public class GazellaDbContext : DbContext
 
                 entity.OwnsOne(a => a.ReviewMetadata, review =>
                 {
+                    review.Property(r => r.IsApproved).HasElementName("is_approved").IsRequired();
                     review.Property(r => r.RejectionReason).HasElementName("rejection_reason").HasMaxLength(1000).IsRequired();
                     review.Property(r => r.ReviewedById).HasElementName("reviewed_by_id").HasMaxLength(36).IsRequired();
-                    review.Property(r => r.ReviewedAt).HasElementName("reviewed_at");
+                    review.Property(r => r.ReviewedAt).HasElementName("reviewed_at").IsRequired();
                 });
 
                 entity.OwnsOne(a => a.Metrics, metrics =>

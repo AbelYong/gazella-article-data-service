@@ -11,6 +11,7 @@ public class ExceptionInterceptor(ILogger<ExceptionInterceptor> logger) : Interc
     private const string InvalidOperation = "invalid_operation";
     private const string DbUnavailable = "db_unavailable";
     private const string NotFound = "not_found";
+    private const string Aborted = "aborted";
 
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
@@ -35,6 +36,11 @@ public class ExceptionInterceptor(ILogger<ExceptionInterceptor> logger) : Interc
         {
             var metadata = new Metadata { { GazellaError, NotFound } };
             throw new RpcException(new Status(StatusCode.NotFound, ex.Message), metadata);
+        }
+        catch (GazellaConcurrencyException ex)
+        {
+            var metadata = new Metadata { { GazellaError, Aborted } };
+            throw new RpcException(new Status(StatusCode.Aborted, ex.Message), metadata);
         }
         catch (GazellaDbException)
         {

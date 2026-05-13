@@ -21,12 +21,14 @@ builder.Services.AddDbContext<GazellaDbContext>(options =>
 
 builder.Services.AddScoped<IDraftRepository, DraftRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IArticlesRepository, ArticleRepository>();
+builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 var app = builder.Build();
 
 app.MapGrpcService<DraftService>();
 app.MapGrpcService<ArticleService.Services.ArticleService>();
+app.MapGrpcService<ReviewService>();
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 await app.RunAsync();

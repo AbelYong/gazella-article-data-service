@@ -17,6 +17,7 @@ public class NullArticle : IArticle
     public string AuthorId => string.Empty;
     public string AuthorName => string.Empty;
     public string AuthorProfilePictureUri => string.Empty;
+    public bool? IsApproved => false;
     public string RejectionReason => string.Empty;
     public string ReviewedById => Guid.Empty.ToString();
     public DateTime? ReviewedAt => DateTime.MinValue;

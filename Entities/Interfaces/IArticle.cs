@@ -14,6 +14,7 @@ public interface IArticle
     string AuthorId { get; }
     string? AuthorName { get; }
     string? AuthorProfilePictureUri { get; }
+    bool? IsApproved { get; }
     string? RejectionReason { get; }
     string? ReviewedById { get; }
     DateTime? ReviewedAt { get; }

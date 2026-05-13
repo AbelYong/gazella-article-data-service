@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ArticleService.Entities.Interfaces;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace ArticleService.Entities;
 
@@ -31,6 +32,8 @@ public class Article : IArticle
     public string? AuthorName => Author.Name;
     [NotMapped]
     public string? AuthorProfilePictureUri => Author.ProfilePictureUri;
+    [NotMapped]
+    public bool? IsApproved => ReviewMetadata?.IsApproved;
     [NotMapped]
     public string? RejectionReason => ReviewMetadata?.RejectionReason;
     [NotMapped]
