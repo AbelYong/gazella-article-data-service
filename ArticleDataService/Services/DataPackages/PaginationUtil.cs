@@ -12,19 +12,20 @@ public static class PaginationUtil
     private const int MaxOffset = (int.MaxValue / MaxPageSize) - MaxPageSize;
 
     /// <summary>
-    /// Validates if the provided index is within the accepted range
+    /// Validates if the provided index is within the accepted range. Assumes a start index of 1
     /// </summary>
     /// <param name="index"></param>
     /// <exception cref="GazellaValidationException">Thrown only if the page index is outside the accepted bounds</exception>
     public static void ValidatePageIndex(int index)
     {
-        switch (index)
+        var calculatedIndex = index - 1;
+        switch (calculatedIndex)
         {
             case < MinPageIndex:
-                throw new GazellaValidationException($"Page index is too low, received {index}, lowest is {MinPageIndex}");
+                throw new GazellaValidationException($"Page index is too low, calculated {calculatedIndex}, lowest is {MinPageIndex}");
             case > MaxPageIndex:
                 throw new GazellaValidationException(
-                    $"Page index is too high, received {index}, highest is {MaxPageIndex}");
+                    $"Page index is too high, calculated {calculatedIndex}, highest is {MaxPageIndex}");
         }
     }
 

@@ -1,5 +1,5 @@
 using ArticleService.Data;
-using ArticleService.Protos;
+using ArticleService.Protos.Review;
 using ArticleService.Services.DataPackages;
 using ArticleService.Services.Exceptions;
 

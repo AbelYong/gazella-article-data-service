@@ -1,6 +1,6 @@
 using ArticleService.Data.Repositories;
 using ArticleService.Entities;
-using ArticleService.Protos;
+using ArticleService.Protos.Review;
 using ArticleService.Services.DataPackages;
 using ArticleService.Services.Exceptions;
 using ArticleService.Services.MessageValidators;
@@ -8,19 +8,23 @@ using Grpc.Core;
 
 namespace ArticleService.Services;
 
-public class ReviewService(IReviewRepository reviewRepository) : Protos.ReviewService.ReviewServiceBase
+public class ReviewService(IReviewRepository reviewRepository) : Protos.Review.ReviewService.ReviewServiceBase
 {
     public override async Task<GetArticlesPendingReviewResponse> GetArticlesPendingReview(GetArticlesPendingReviewRequest request, ServerCallContext context)
     {
-        var index = request.PageIndex - 1;
-        var pageSize = request.PageSize;
-        
         ReviewValidator.ValidateArticlesPendingRequest(request);
-        var offset = PaginationUtil.GetOffset(index, pageSize);
+        var index = request.PageIndex - 1;
+        var offset = PaginationUtil.GetOffset(index, request.PageSize);
 
         var articlesPendingReviewPage = await reviewRepository.GetArticlesPendingReview(offset, request.PageSize);
 
-        var response = new GetArticlesPendingReviewResponse();
+        var response = new GetArticlesPendingReviewResponse
+        {
+            TotalPending = articlesPendingReviewPage.TotalItems,
+            CurrentPage = request.PageIndex,
+            PageCount = articlesPendingReviewPage.PageCount,
+            PageSize = request.PageSize,
+        };
         response.ArticlesPending.AddRange(articlesPendingReviewPage.Items.Select(a => new ArticlePendingReview
         {
             ArticleId = a.Id,
@@ -29,11 +33,6 @@ public class ReviewService(IReviewRepository reviewRepository) : Protos.ReviewSe
             Category = a.Category,
             SubmittedAt = a.LastUpdatedAt.ToString()
         }));
-        response.TotalPending = articlesPendingReviewPage.TotalItems;
-        response.CurrentPage = request.PageIndex;
-        response.PageCount = articlesPendingReviewPage.PageCount;
-        response.PageSize = pageSize;
-        
         return response;
     }
 
