@@ -17,4 +17,5 @@ public static class EntitySizeConstraints
     public static readonly int ReviewRejectionReasonMaxLength = 1000;
     
     public static readonly int CommentContentMaxLength = 1000;
+    public static readonly int RecentCommentsLimit = 5;
 }

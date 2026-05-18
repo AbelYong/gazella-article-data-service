@@ -4,18 +4,14 @@ using ArticleService.Entities;
 
 namespace ArticleService.Data;
 
-public class GazellaDbContext : DbContext
+public class GazellaDbContext(DbContextOptions<GazellaDbContext> options) : DbContext(options)
 {
     public DbSet<Article> Articles { get; init; }
     public DbSet<Category> Categories { get; init; }
     public DbSet<Comment> Comments { get; init; }
-    
-    public GazellaDbContext(DbContextOptions<GazellaDbContext> options) 
-            : base(options)
-        {
-        }
+    public DbSet<Like>  Likes { get; init; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
@@ -84,6 +80,19 @@ public class GazellaDbContext : DbContext
                 entity.Property(c => c.AuthorProfilePictureUri).HasElementName("author_profile_picture_uri").HasMaxLength(256);
                 entity.Property(c => c.Content).HasElementName("content").HasMaxLength(1000).IsRequired();
                 entity.Property(c => c.PostedAt).HasElementName("posted_at").IsRequired();
+            });
+
+            modelBuilder.Entity<Like>(entity =>
+            {
+                entity.ToCollection("likes");
+                entity.HasKey(l => l.Id);
+                entity.Property(l => l.Id).HasElementName("_id").HasMaxLength(36);
+                
+                entity.Property(l => l.ArticleId).HasElementName("article_id").HasMaxLength(36).IsRequired();
+                entity.Property(l => l.AuthorId).HasElementName("author_id").HasMaxLength(36).IsRequired();
+                entity.Property(l => l.IsLiked).HasElementName("is_liked").IsRequired();
+                
+                entity.HasIndex(l => new { l.ArticleId, l.AuthorId }).IsUnique();
             });
         }
 }

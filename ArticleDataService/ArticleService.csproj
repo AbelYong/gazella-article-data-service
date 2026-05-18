@@ -13,6 +13,7 @@
     <Protobuf Include="Protos\draft_service.proto" GrpcServices="Server" />
     <Protobuf Include="Protos\article_service.proto" GrpcServices="Server" />
     <Protobuf Include="Protos\review_service.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\interaction_service.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
