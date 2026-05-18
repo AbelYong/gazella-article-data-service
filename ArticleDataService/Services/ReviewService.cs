@@ -31,7 +31,7 @@ public class ReviewService(IReviewRepository reviewRepository) : Protos.Review.R
             Title = a.Title,
             AuthorName = a.AuthorName,
             Category = a.Category,
-            SubmittedAt = a.LastUpdatedAt.ToString()
+            SubmittedAt = a.LastUpdatedAt != null ? a.LastUpdatedAt?.ToString("O") : ""
         }));
         return response;
     }
@@ -51,7 +51,7 @@ public class ReviewService(IReviewRepository reviewRepository) : Protos.Review.R
         {
             IsApproved = true,
             ReviewedById = request.ReviewedById,
-            ReviewedAt = DateTime.UtcNow
+            ReviewedAt = DateTimeOffset.UtcNow
         };
 
         var result = await reviewRepository.UpdateArticleReview(toReview, ArticleStatus.Published);
@@ -85,7 +85,7 @@ public class ReviewService(IReviewRepository reviewRepository) : Protos.Review.R
             IsApproved = false,
             RejectionReason = request.RejectionReason,
             ReviewedById = request.ReviewedById,
-            ReviewedAt = DateTime.UtcNow
+            ReviewedAt = DateTimeOffset.UtcNow
         };
         
         var result = await reviewRepository.UpdateArticleReview(toReview, ArticleStatus.Rejected);

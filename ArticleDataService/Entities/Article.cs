@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ArticleService.Entities.Interfaces;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace ArticleService.Entities;
 
@@ -17,8 +16,8 @@ public class Article : IArticle
     public string? Summary { get; set; }
     [MaxLength(64)]
     public string Category { get; set; } = string.Empty;
-    public DateTime? PublishedAt { get; set; }
-    public DateTime? LastUpdatedAt { get; set; }
+    public DateTimeOffset? PublishedAt { get; set; }
+    public DateTimeOffset? LastUpdatedAt { get; set; }
     public ArticleStatus Status { get; set; } = ArticleStatus.Draft;
     public string Content { get; set; } = string.Empty;
     public required Author Author { get; set; }
@@ -39,7 +38,7 @@ public class Article : IArticle
     [NotMapped]
     public string? ReviewedById => ReviewMetadata?.ReviewedById;
     [NotMapped]
-    public DateTime? ReviewedAt => ReviewMetadata?.ReviewedAt;
+    public DateTimeOffset? ReviewedAt => ReviewMetadata?.ReviewedAt;
     [NotMapped]
     public int Views => Metrics.Views;
     [NotMapped]

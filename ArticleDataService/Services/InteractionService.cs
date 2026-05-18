@@ -21,7 +21,7 @@ public class InteractionService(IInteractionRepository interactionRepository, IA
             AuthorName = request.AuthorName,
             AuthorProfilePictureUri = request.AuthorPfpUri,
             Content = request.Content,
-            PostedAt = DateTime.UtcNow
+            PostedAt = DateTimeOffset.UtcNow
         };
         
         var comment = await interactionRepository.AddCommentAsync(request.ArticleId, newComment);
@@ -92,7 +92,7 @@ public class InteractionService(IInteractionRepository interactionRepository, IA
             AuthorName = c.AuthorName,
             AuthorPfpUri = c.AuthorProfilePictureUri,
             Content = c.Content,
-            PostedAt = c.PostedAt.ToString(CultureInfo.InvariantCulture)
+            PostedAt = c.PostedAt.ToString("O")
         }));
         return response;
     }

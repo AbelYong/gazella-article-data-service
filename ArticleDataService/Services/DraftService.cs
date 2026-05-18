@@ -27,7 +27,7 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
                 Id = request.AuthorId
             },
             Content = request.Content,
-            LastUpdatedAt = DateTime.UtcNow
+            LastUpdatedAt = DateTimeOffset.UtcNow
         };
             
         var draftId = await draftRepository.SaveDraft(draft);
@@ -60,7 +60,7 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
         updatedDraft.Summary = request.Summary;
         updatedDraft.Category = category.Name;
         updatedDraft.Content = request.Content;
-        updatedDraft.LastUpdatedAt = DateTime.UtcNow;
+        updatedDraft.LastUpdatedAt = DateTimeOffset.UtcNow;
             
         await draftRepository.UpdateDraft(updatedDraft);
 
@@ -89,14 +89,14 @@ public class DraftService(IDraftRepository draftRepository, ICategoryRepository 
         toPublish.Author.Name = request.AuthorName;
         toPublish.Author.ProfilePictureUri = request.AuthorPfpUri;
         toPublish.Content = request.Content;
-        toPublish.LastUpdatedAt = DateTime.UtcNow;
+        toPublish.LastUpdatedAt = DateTimeOffset.UtcNow;
 
         var status = await draftRepository.SaveDraftPublication(toPublish);
 
         return new PublishDraftResponse
         {
             ArticleStatus = status,
-            Message = "Draft successfully published"
+            Message = "The draft has been submitted for publication"
         };
     }
 }

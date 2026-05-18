@@ -9,8 +9,8 @@ public class NullArticle : IArticle
     public string CoverUri =>  string.Empty;
     public string Summary =>  string.Empty;
     public string Category => string.Empty;
-    public DateTime? PublishedAt => DateTime.MinValue;
-    public DateTime? LastUpdatedAt => DateTime.MinValue;
+    public DateTimeOffset? PublishedAt => DateTimeOffset.MinValue;
+    public DateTimeOffset? LastUpdatedAt => DateTimeOffset.MinValue;
     public ArticleStatus Status => ArticleStatus.Draft;
     public string Content => string.Empty;
     
@@ -20,7 +20,7 @@ public class NullArticle : IArticle
     public bool? IsApproved => false;
     public string RejectionReason => string.Empty;
     public string ReviewedById => Guid.Empty.ToString();
-    public DateTime? ReviewedAt => DateTime.MinValue;
+    public DateTimeOffset? ReviewedAt => DateTimeOffset.MinValue;
     public int Views => 0;
     public int Likes => 0;
     public int CommentsCount => 0;

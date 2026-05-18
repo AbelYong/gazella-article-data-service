@@ -10,5 +10,5 @@ public class NullComment : IComment
     public string AuthorName => string.Empty;
     public string AuthorProfilePictureUri => string.Empty;
     public string Content => string.Empty;
-    public DateTime PostedAt => DateTime.MinValue;
+    public DateTimeOffset PostedAt => DateTimeOffset.MinValue;
 }

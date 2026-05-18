@@ -1,4 +1,3 @@
-using System.Globalization;
 using ArticleService.Data.Repositories;
 using ArticleService.Protos.Article;
 using ArticleService.Services.Exceptions;
@@ -41,7 +40,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             Title = a.Title,
             Status = a.Status.ToString(),
             Category = a.Category,
-            PublishedAt = a.PublishedAt.ToString(),
+            PublishedAt = a.PublishedAt != null ? a.PublishedAt?.ToString("O") : "",
             Likes = a.Likes,
             Comments = a.CommentsCount
         }));
@@ -71,8 +70,8 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             CoverUri = foundArticle.CoverUri,
             Summary = foundArticle.Summary,
             Category = foundArticle.Category,
-            PublishedAt = foundArticle.PublishedAt.ToString(),
-            LastUpdatedAt = foundArticle.LastUpdatedAt.ToString(),
+            PublishedAt = foundArticle.PublishedAt != null ? foundArticle.PublishedAt?.ToString("O") : "",
+            LastUpdatedAt = foundArticle.LastUpdatedAt != null ? foundArticle.LastUpdatedAt?.ToString("O") : "",
             Status = foundArticle.Status.ToString(),
             Content = foundArticle.Content,
             AuthorId = foundArticle.AuthorId,
@@ -88,7 +87,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             AuthorName = c.AuthorName,
             AuthorPfpUri = c.AuthorProfilePictureUri,
             Content = c.Content,
-            PostedAt = c.PostedAt.ToString(CultureInfo.InvariantCulture)
+            PostedAt = c.PostedAt.ToString("O")
         }));
         return response;
     }
