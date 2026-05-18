@@ -14,7 +14,7 @@ public class DraftRepository(GazellaDbContext context, ILogger<DraftRepository> 
         try
         {
             await context.Articles.AddAsync(draft);
-            await  context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             
             return draft.Id;
         }

@@ -1,7 +1,7 @@
 using Grpc.Core;
 using ArticleService.Data.Repositories;
 using ArticleService.Entities;
-using ArticleService.Protos;
+using ArticleService.Protos.Draft;
 using ArticleService.Services.Domain;
 using ArticleService.Services.Exceptions;
 using ArticleService.Services.MessageValidators;
@@ -9,7 +9,7 @@ using ArticleService.Services.MessageValidators;
 namespace ArticleService.Services;
 
 public class DraftService(IDraftRepository draftRepository, ICategoryRepository categoryRepository) 
-    : Protos.DraftService.DraftServiceBase
+    : Protos.Draft.DraftService.DraftServiceBase
 {
     public override async Task<SubmitDraftResponse> SubmitDraft(SubmitDraftRequest request, ServerCallContext context)
     {

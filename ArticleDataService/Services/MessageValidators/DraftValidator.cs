@@ -1,4 +1,4 @@
-using ArticleService.Protos;
+using ArticleService.Protos.Draft;
 using ArticleService.Data;
 using ArticleService.Services.Domain;
 using ArticleService.Services.Exceptions;
@@ -91,10 +91,10 @@ public static class DraftValidator
         GeneralValidator.ValidateId(issues, request.CategoryId, "CategoryId");
         
         request.AuthorName = request.AuthorName.Trim();
-        ValidateAuthorName(issues, request.AuthorName);
+        GeneralValidator.ValidateAuthorName(issues, request.AuthorName);
 
         request.AuthorPfpUri = request.AuthorPfpUri.Trim();
-        ValidateAuthorPfpUri(issues, request.AuthorPfpUri);
+        GeneralValidator.ValidateAuthorPfpUri(issues, request.AuthorPfpUri);
         
         ValidateContent(issues, request.Content);
         
@@ -114,27 +114,6 @@ public static class DraftValidator
         {
             issues.Add($"Title is too long, max length is {EntitySizeConstraints.ArticleTitleMaxLength}");
         }
-    }
-    
-    private static void ValidateAuthorName(List<string> issues, string name)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            issues.Add("Author name is required");
-        }
-        else if (name.Length > EntitySizeConstraints.AuthorNameMaxLength)
-        {
-            issues.Add($"Author name is too long, max length is {EntitySizeConstraints.AuthorNameMaxLength}");
-        }
-    }
-
-    private static void ValidateAuthorPfpUri(List<string> issues, string pfpUri)
-    {
-        if (pfpUri.Length > EntitySizeConstraints.AuthorProfilePictureUriMaxLength)
-        {
-            issues.Add($"Author profile picture URI is too long, max length is {EntitySizeConstraints.AuthorProfilePictureUriMaxLength}");
-        }
-        //todo uri format verification
     }
 
     private static void ValidateCoverUri(List<string> issues, string coverUri)
