@@ -1,15 +1,13 @@
+using System.Globalization;
 using ArticleService.Data.Repositories;
-using ArticleService.Entities;
-using ArticleService.Protos;
+using ArticleService.Protos.Article;
 using ArticleService.Services.Exceptions;
 using Grpc.Core;
-using Category = ArticleService.Protos.Category;
-using Comment = ArticleService.Protos.Comment;
 
 namespace ArticleService.Services;
 
 public class ArticleService(IArticleRepository articleRepository, ICategoryRepository categoryRepository) 
-    : Protos.ArticleService.ArticleServiceBase
+    : Protos.Article.ArticleService.ArticleServiceBase
 {
     public override async Task<GetCategoriesResponse> GetCategories(GetCategoriesRequest request, ServerCallContext context)
     {
@@ -61,38 +59,37 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
 
         var article = await articleRepository.GetArticleById(request.Id);
 
-        if (article is Article foundArticle)
-        {
-            var response = new GetArticleResponse
-            {
-                Id = foundArticle.Id,
-                Title = foundArticle.Title,
-                CoverUri = foundArticle.CoverUri,
-                Summary = foundArticle.Summary,
-                Category = foundArticle.Category,
-                PublishedAt = foundArticle.PublishedAt.ToString(),
-                LastUpdatedAt = foundArticle.LastUpdatedAt.ToString(),
-                Status = foundArticle.Status.ToString(),
-                Content = foundArticle.Content,
-                AuthorId = foundArticle.AuthorId,
-                AuthorName = foundArticle.AuthorName,
-                AuthorPfpUri = foundArticle.AuthorProfilePictureUri,
-                LikesCount = foundArticle.Likes,
-                CommentsCount = foundArticle.CommentsCount,
-            };
-            response.RecentComments.AddRange(article.Comments.Select(c => new Comment
-            {
-                AuthorId = c.AuthorId,
-                AuthorName = c.AuthorName,
-                AuthorPfpUri = c.AuthorProfilePictureUri,
-                Content = c.Content,
-                PostedAt = c.PostedAt.ToString()
-            }));
-            return response;
-        }
-        else
+        if (article is not Entities.Article foundArticle)
         {
             throw new GazellaNotFoundException($"No article matching id: {request.Id} could be found");
         }
+        
+        var response = new GetArticleResponse
+        {
+            Id = foundArticle.Id,
+            Title = foundArticle.Title,
+            CoverUri = foundArticle.CoverUri,
+            Summary = foundArticle.Summary,
+            Category = foundArticle.Category,
+            PublishedAt = foundArticle.PublishedAt.ToString(),
+            LastUpdatedAt = foundArticle.LastUpdatedAt.ToString(),
+            Status = foundArticle.Status.ToString(),
+            Content = foundArticle.Content,
+            AuthorId = foundArticle.AuthorId,
+            AuthorName = foundArticle.AuthorName,
+            AuthorPfpUri = foundArticle.AuthorProfilePictureUri,
+            LikesCount = foundArticle.Likes,
+            CommentsCount = foundArticle.CommentsCount,
+        };
+        response.RecentComments.AddRange(article.Comments.Select(c => new RecentComment
+        {
+            Id = c.Id,
+            AuthorId = c.AuthorId,
+            AuthorName = c.AuthorName,
+            AuthorPfpUri = c.AuthorProfilePictureUri,
+            Content = c.Content,
+            PostedAt = c.PostedAt.ToString(CultureInfo.InvariantCulture)
+        }));
+        return response;
     }
 }
