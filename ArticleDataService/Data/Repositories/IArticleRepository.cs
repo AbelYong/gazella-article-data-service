@@ -10,4 +10,6 @@ public interface IArticleRepository
     Task<IEnumerable<IArticle>> GetArticlesByAuthorId(string authorId);
     Task<IArticle> GetArticleById(string id);
     Task<PaginationResult<IArticle>> SearchArticlesAsync(ArticleSearch search, int offset, int pageSize);
+    Task<PaginationResult<IArticle>> GetPublishedArticlesAsync(int offset, int pageSize);
+    Task<IArticle> RemoveArticleAsync(string id);
 }

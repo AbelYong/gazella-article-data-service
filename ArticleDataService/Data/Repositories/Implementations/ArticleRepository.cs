@@ -87,6 +87,8 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
         {
             IQueryable<Article> query = Context.Articles.AsQueryable();
 
+            query = query.Where(a => a.Status == ArticleStatus.Published);
+
             if (!string.IsNullOrEmpty(search.Title)) 
             {
                 query = query.Where(a => a.Title.ToLower().Contains(search.Title));
@@ -127,5 +129,48 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
                 PageCount = (int)Math.Ceiling(totalItems / (double)pageSize)
             };
         }, "searching articles");
+    }
+
+    public async Task<PaginationResult<IArticle>> GetPublishedArticlesAsync(int  offset, int pageSize)
+    {
+        return await ExecuteDbOperationAsync(async () =>
+        {
+            var query = Context.Articles.Where(a =>
+                a.Status == ArticleStatus.Published || a.Status == ArticleStatus.Removed);
+            
+            var totalItems =  await query.CountAsync();
+            var articles = await query
+                .Skip(offset)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            return new PaginationResult<IArticle>()
+            {
+                Items = articles.Cast<IArticle>().ToList(),
+                TotalItems = articles.Count,
+                PageCount = (int)Math.Ceiling(totalItems / (double)pageSize)
+            };
+        }, "retrieving published articles");
+    }
+
+    public async Task<IArticle> RemoveArticleAsync(string id)
+    {
+        return await ExecuteDbOperationAsync<IArticle>(async () =>
+        {
+            var article = await Context.Articles
+                .Where(a => a.Status == ArticleStatus.Published)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (article == null)
+            {
+                return new NullArticle();
+            }
+            
+            article.Status = ArticleStatus.Removed;
+            await Context.SaveChangesAsync();
+
+            return article;
+        }, "Removing article");
     }
 }

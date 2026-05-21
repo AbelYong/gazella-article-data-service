@@ -120,4 +120,55 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
         response.PageCount = result.PageCount;
         return response;
     }
+
+    public override async Task<GetPublishedArticlesResponse> GetPublishedArticles(GetPublishedArticlesRequest request, ServerCallContext context)
+    {
+        PaginationUtil.ValidatePageIndex(request.PageIndex);
+        PaginationUtil.ValidatePageSize(request.PageSize);
+        PaginationUtil.ValidatePageOffset(request.PageIndex,  request.PageSize);
+        
+        var index = request.PageIndex - 1;
+        var offset = PaginationUtil.GetOffset(index, request.PageSize);
+
+        var result = await articleRepository.GetPublishedArticlesAsync(offset, request.PageSize);
+
+        var response = new GetPublishedArticlesResponse();
+        response.PublishedArticles.AddRange(result.Items.Select(a => new PublishedArticle
+        {
+            Id = a.Id,
+            Title = a.Title,
+            AuthorName = a.AuthorName,
+            PublishedAt = a.PublishedAt != null ? a.PublishedAt?.ToString("O") : "",
+            LikesCount = a.Likes,
+            CommentsCount = a.CommentsCount,
+            Status = a.Status.ToString(),
+        }));
+        response.TotalEntries = result.TotalItems;
+        response.CurrentPage = request.PageIndex;
+        response.PageSize = request.PageSize;
+        response.PageCount = result.PageCount;
+        return response;
+    }
+
+    public override async Task<DeleteArticleResponse> DeleteArticle(DeleteArticleRequest request, ServerCallContext context)
+    {
+        request.ArticleId = request.ArticleId.Trim();
+        if (!Guid.TryParse(request.ArticleId, out _))
+        {
+            throw new GazellaValidationException("Provided Id is not a valid UUID");
+        }
+
+        var toRemove = await articleRepository.RemoveArticleAsync(request.ArticleId);
+
+        if (toRemove is not Entities.Article removed)
+        {
+            throw new GazellaNotFoundException($"No currently published article with Id: {request.ArticleId} was found");
+        }
+
+        return new DeleteArticleResponse
+        {
+            Status = removed.Status.ToString(),
+            Message = $"Article {removed.Id} has been removed."
+        };
+    }
 }
