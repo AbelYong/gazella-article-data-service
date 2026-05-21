@@ -46,14 +46,15 @@ public static class PaginationUtil
     }
 
     /// <summary>
-    /// Validates if the calculated skip offset is within the accepted range given a pageIndex and pageSize
+    /// Validates if the calculated skip offset is within the accepted range given a pageIndex and pageSize. Assumes a start index of 1
     /// </summary>
     /// <param name="pageIndex"></param>
     /// <param name="pageSize"></param>
     /// <exception cref="GazellaValidationException">Thrown if the calculated skip offset is outside the accepted bounds</exception>
     public static void ValidatePageOffset(int pageIndex, int pageSize)
     {
-        long offset = pageIndex * pageSize;
+        var calculatedIndex = pageIndex - 1;
+        long offset = calculatedIndex * pageSize;
 
         switch (offset)
         {
@@ -65,7 +66,7 @@ public static class PaginationUtil
     }
 
     /// <summary>
-    /// Returns the calculated offset. Does not guarantee the returned offset will be valid 
+    /// Returns the calculated offset. Does not guarantee the returned offset will be valid
     /// </summary>
     /// <param name="pageIndex"></param>
     /// <param name="pageSize"></param>

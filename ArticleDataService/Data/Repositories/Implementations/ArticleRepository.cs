@@ -1,18 +1,22 @@
 using ArticleService.Data.Exceptions;
+using ArticleService.Entities;
 using ArticleService.Entities.Interfaces;
 using ArticleService.Entities.NullEntities;
+using ArticleService.Services.DataPackages;
+using ArticleService.Services.Domain;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 
 namespace ArticleService.Data.Repositories.Implementations;
 
-public class ArticleRepository(GazellaDbContext context, ILogger<CategoryRepository> logger) : IArticleRepository
+public class ArticleRepository(GazellaDbContext context, ILogger<CategoryRepository> logger)
+    : BaseRepository(context, logger), IArticleRepository
 {
     public async Task<bool> VerifyArticleExists(string id)
     {
         try
         {
-            var article = await context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+            var article = await Context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
 
             return article != null;
         }
@@ -32,7 +36,7 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
     {
         try
         {
-            var articles = await context.Articles
+            var articles = await Context.Articles
                 .Where(a => a.Author.Id == authorId).AsNoTracking().ToListAsync();
             
             if (articles.Count > 0)
@@ -57,7 +61,7 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
     {
         try
         {
-            var article =  await context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+            var article =  await Context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
 
             if (article != null)
             {
@@ -75,5 +79,53 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
             logger.LogError(ex, "Unexpected exception while retrieving article by Id: {Ex}", ex.Message);
             throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
         }
+    }
+
+    public async Task<PaginationResult<IArticle>> SearchArticlesAsync(ArticleSearch search, int offset, int pageSize)
+    {
+        return await ExecuteDbOperationAsync(async () =>
+        {
+            IQueryable<Article> query = Context.Articles.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search.Title)) 
+            {
+                query = query.Where(a => a.Title.ToLower().Contains(search.Title));
+            }
+            if (!string.IsNullOrEmpty(search.Category))
+            {
+                query = query.Where(a => a.Category.ToLower().Contains(search.Category));
+            }
+            if (!string.IsNullOrEmpty(search.AuthorName))
+            {
+                query = query.Where(a => a.Author.Name != null && a.Author.Name.ToLower().Contains(search.AuthorName));
+            }
+            if (search.PublishedAfter.HasValue)
+            {
+                query = query.Where(a => a.PublishedAt >= search.PublishedAfter.Value);
+            }
+
+            query = search.SortBy switch
+            {
+                "views" => query.OrderByDescending(a => a.Metrics.Views),
+                "comments" => query.OrderByDescending(a => a.Metrics.CommentsCount),
+                "likes" => query.OrderByDescending(a => a.Metrics.Likes),
+                _ => query.OrderByDescending(a => a.PublishedAt)
+            };
+            
+            var totalItems = await query.CountAsync();
+            
+            var result = await query
+                .Skip(offset)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return new PaginationResult<IArticle>
+            {
+                Items = result.Cast<IArticle>().ToList(),
+                TotalItems = totalItems,
+                PageCount = (int)Math.Ceiling(totalItems / (double)pageSize)
+            };
+        }, "searching articles");
     }
 }

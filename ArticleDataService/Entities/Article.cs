@@ -16,8 +16,8 @@ public class Article : IArticle
     public string? Summary { get; set; }
     [MaxLength(64)]
     public string Category { get; set; } = string.Empty;
-    public DateTimeOffset? PublishedAt { get; set; }
-    public DateTimeOffset? LastUpdatedAt { get; set; }
+    public DateTime? PublishedAt { get; set; }
+    public DateTime? LastUpdatedAt { get; set; }
     public ArticleStatus Status { get; set; } = ArticleStatus.Draft;
     public string Content { get; set; } = string.Empty;
     public required Author Author { get; set; }
@@ -38,7 +38,7 @@ public class Article : IArticle
     [NotMapped]
     public string? ReviewedById => ReviewMetadata?.ReviewedById;
     [NotMapped]
-    public DateTimeOffset? ReviewedAt => ReviewMetadata?.ReviewedAt;
+    public DateTime? ReviewedAt => ReviewMetadata?.ReviewedAt;
     [NotMapped]
     public int Views => Metrics.Views;
     [NotMapped]

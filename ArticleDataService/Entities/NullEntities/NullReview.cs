@@ -7,5 +7,5 @@ public class NullReview : IReview
     public bool IsApproved => false;
     public string RejectionReason =>  string.Empty;
     public string ReviewedById =>  string.Empty;
-    public DateTimeOffset ReviewedAt => DateTimeOffset.MinValue;
+    public DateTime ReviewedAt => DateTime.MinValue;
 }

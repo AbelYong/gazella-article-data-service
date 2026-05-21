@@ -10,5 +10,5 @@ public class Comment : IComment
     public string AuthorName { get; set; } = string.Empty;
     public string? AuthorProfilePictureUri { get; set; }
     public string Content { get; set; } = string.Empty;
-    public DateTimeOffset PostedAt { get; set; }
+    public DateTime PostedAt { get; set; }
 }

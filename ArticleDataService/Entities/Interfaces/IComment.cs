@@ -8,5 +8,5 @@ public interface IComment
     string AuthorName { get; }
     string? AuthorProfilePictureUri { get; }
     string Content { get; }
-    DateTimeOffset PostedAt { get; }
+    DateTime PostedAt { get; }
 }

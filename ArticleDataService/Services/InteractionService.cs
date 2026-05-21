@@ -21,7 +21,7 @@ public class InteractionService(IInteractionRepository interactionRepository, IA
             AuthorName = request.AuthorName,
             AuthorProfilePictureUri = request.AuthorPfpUri,
             Content = request.Content,
-            PostedAt = DateTimeOffset.UtcNow
+            PostedAt = DateTime.UtcNow
         };
         
         var comment = await interactionRepository.AddCommentAsync(request.ArticleId, newComment);

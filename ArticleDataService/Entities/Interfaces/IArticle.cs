@@ -7,8 +7,8 @@ public interface IArticle
     string? CoverUri { get; }
     string? Summary { get; }
     string Category { get; }
-    DateTimeOffset? PublishedAt { get; }
-    DateTimeOffset? LastUpdatedAt { get; }
+    DateTime? PublishedAt { get; }
+    DateTime? LastUpdatedAt { get; }
     ArticleStatus Status { get; }
     string Content { get; }
     string AuthorId { get; }
@@ -17,7 +17,7 @@ public interface IArticle
     bool? IsApproved { get; }
     string? RejectionReason { get; }
     string? ReviewedById { get; }
-    DateTimeOffset? ReviewedAt { get; }
+    DateTime? ReviewedAt { get; }
     int Views { get; }
     int Likes { get; }
     int CommentsCount { get; }

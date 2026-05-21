@@ -9,5 +9,5 @@ public class NullRecentComment : IRecentComment
     public string AuthorName =>  string.Empty;
     public string AuthorProfilePictureUri =>  string.Empty;
     public string Content =>  string.Empty;
-    public DateTimeOffset PostedAt => DateTimeOffset.MinValue;
+    public DateTime PostedAt => DateTime.MinValue;
 }

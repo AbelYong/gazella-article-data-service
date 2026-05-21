@@ -47,11 +47,12 @@ public class ReviewService(IReviewRepository reviewRepository) : Protos.Review.R
             throw new GazellaNotFoundException($"No article pending review with Id: {request.ArticleId} could be found.");
         }
 
+        toReview.PublishedAt = DateTime.UtcNow;
         toReview.ReviewMetadata = new Review
         {
             IsApproved = true,
             ReviewedById = request.ReviewedById,
-            ReviewedAt = DateTimeOffset.UtcNow
+            ReviewedAt = DateTime.UtcNow
         };
 
         var result = await reviewRepository.UpdateArticleReview(toReview, ArticleStatus.Published);
@@ -85,7 +86,7 @@ public class ReviewService(IReviewRepository reviewRepository) : Protos.Review.R
             IsApproved = false,
             RejectionReason = request.RejectionReason,
             ReviewedById = request.ReviewedById,
-            ReviewedAt = DateTimeOffset.UtcNow
+            ReviewedAt = DateTime.UtcNow
         };
         
         var result = await reviewRepository.UpdateArticleReview(toReview, ArticleStatus.Rejected);

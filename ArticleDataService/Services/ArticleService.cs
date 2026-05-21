@@ -1,6 +1,8 @@
 using ArticleService.Data.Repositories;
 using ArticleService.Protos.Article;
+using ArticleService.Services.DataPackages;
 using ArticleService.Services.Exceptions;
+using ArticleService.Services.MessageValidators;
 using Grpc.Core;
 
 namespace ArticleService.Services;
@@ -89,6 +91,33 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             Content = c.Content,
             PostedAt = c.PostedAt.ToString("O")
         }));
+        return response;
+    }
+
+    public override async Task<SearchArticlesResponse> SearchArticles(SearchArticlesRequest request, ServerCallContext context)
+    {
+        var search = ArticleValidator.ValidateSearchArticlesRequest(request);
+        var index = request.PageIndex - 1;
+        var offset = PaginationUtil.GetOffset(index, request.PageSize);
+
+        var result = await articleRepository.SearchArticlesAsync(search, offset, request.PageSize);
+
+        var response = new SearchArticlesResponse();
+        response.Entries.AddRange(result.Items.Select(a => new ArticleEntry
+        {
+            Id = a.Id,
+            Title = a.Title,
+            AuthorId = a.AuthorId,
+            AuthorName = a.AuthorName,
+            CategoryName = a.Category,
+            Summary = a.Summary,
+            PublishedAt = a.PublishedAt != null ? a.PublishedAt?.ToString("O") : "",
+            LastUpdatedAt = a.LastUpdatedAt != null ? a.LastUpdatedAt?.ToString("O") : "",
+        }));
+        response.TotalEntries = result.TotalItems;
+        response.CurrentPage = request.PageIndex;
+        response.PageSize = request.PageSize;
+        response.PageCount = result.PageCount;
         return response;
     }
 }
