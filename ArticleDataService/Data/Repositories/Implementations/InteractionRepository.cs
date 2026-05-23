@@ -191,7 +191,8 @@ public class InteractionRepository(GazellaDbContext context, ILogger<BaseReposit
                 {
                     ArticleId = articleId,
                     AuthorId = authorId,
-                    IsLiked = true
+                    IsLiked = true,
+                    LikedAt = DateTime.UtcNow
                 };
                 
                 var currentLikes = article.Metrics.Likes + 1;

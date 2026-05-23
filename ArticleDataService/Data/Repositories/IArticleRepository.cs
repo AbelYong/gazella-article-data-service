@@ -12,4 +12,5 @@ public interface IArticleRepository
     Task<PaginationResult<IArticle>> SearchArticlesAsync(ArticleSearch search, int offset, int pageSize);
     Task<PaginationResult<IArticle>> GetPublishedArticlesAsync(int offset, int pageSize);
     Task<IArticle> RemoveArticleAsync(string id);
+    Task<AuthorStats> GetAuthorStatsAsync(string authorId);
 }

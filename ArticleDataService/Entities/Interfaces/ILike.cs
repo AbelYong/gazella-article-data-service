@@ -6,4 +6,5 @@ public interface ILike
     public string ArticleId { get; }
     public string AuthorId { get; }
     public bool IsLiked { get; }
+    public DateTime LikedAt { get; }
 }

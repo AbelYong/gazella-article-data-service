@@ -31,14 +31,14 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
             throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
         }
     }
-    
+
     public async Task<IEnumerable<IArticle>> GetArticlesByAuthorId(string authorId)
     {
         try
         {
             var articles = await Context.Articles
                 .Where(a => a.Author.Id == authorId).AsNoTracking().ToListAsync();
-            
+
             if (articles.Count > 0)
             {
                 return articles;
@@ -61,13 +61,20 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
     {
         try
         {
-            var article =  await Context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+            var article = await Context.Articles.FirstOrDefaultAsync(a => a.Id == id);
 
-            if (article != null)
+            if (article == null)
             {
-                return article;
+                return new NullArticle();
             }
-            return new NullArticle();
+
+            if (article.Status == ArticleStatus.Published)
+            {
+                article.Metrics.Views++;
+                await Context.SaveChangesAsync();
+            }
+
+            return article;
         }
         catch (Exception ex) when (ex.InnerException is MongoConnectionException || ex is TimeoutException)
         {
@@ -89,7 +96,7 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
 
             query = query.Where(a => a.Status == ArticleStatus.Published);
 
-            if (!string.IsNullOrEmpty(search.Title)) 
+            if (!string.IsNullOrEmpty(search.Title))
             {
                 query = query.Where(a => a.Title.ToLower().Contains(search.Title));
             }
@@ -113,9 +120,9 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
                 "likes" => query.OrderByDescending(a => a.Metrics.Likes),
                 _ => query.OrderByDescending(a => a.PublishedAt)
             };
-            
+
             var totalItems = await query.CountAsync();
-            
+
             var result = await query
                 .Skip(offset)
                 .Take(pageSize)
@@ -131,20 +138,20 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
         }, "searching articles");
     }
 
-    public async Task<PaginationResult<IArticle>> GetPublishedArticlesAsync(int  offset, int pageSize)
+    public async Task<PaginationResult<IArticle>> GetPublishedArticlesAsync(int offset, int pageSize)
     {
         return await ExecuteDbOperationAsync(async () =>
         {
             var query = Context.Articles.Where(a =>
                 a.Status == ArticleStatus.Published || a.Status == ArticleStatus.Removed);
-            
-            var totalItems =  await query.CountAsync();
+
+            var totalItems = await query.CountAsync();
             var articles = await query
                 .Skip(offset)
                 .Take(pageSize)
                 .AsNoTracking()
                 .ToListAsync();
-            
+
             return new PaginationResult<IArticle>()
             {
                 Items = articles.Cast<IArticle>().ToList(),
@@ -166,11 +173,102 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
             {
                 return new NullArticle();
             }
-            
+
             article.Status = ArticleStatus.Removed;
             await Context.SaveChangesAsync();
 
             return article;
         }, "Removing article");
+    }
+    
+    public async Task<AuthorStats> GetAuthorStatsAsync(string authorId)
+    {
+        return await ExecuteDbOperationAsync(async () =>
+        {
+            var stats = new AuthorStats { TopAuthorArticles = new List<TopAuthorArticle>() };
+
+            var articleMetrics = await Context.Articles
+                .Where(a => a.Author.Id == authorId && a.Status == ArticleStatus.Published)
+                .OrderByDescending(a => a.Metrics.Likes)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Title,
+                    a.Metrics.Likes,
+                    a.Metrics.CommentsCount,
+                    a.Metrics.Views
+                })
+                .ToListAsync();
+
+            if (articleMetrics.Count <= 0)
+            {
+                return stats;
+            }
+
+            stats.TopAuthorArticles = articleMetrics.Select(a => new TopAuthorArticle
+            {
+                Id = a.Id,
+                Title = a.Title,
+                CommentsCount = a.CommentsCount,
+                LikeCount = a.Likes
+            }).Take(3).ToList();
+
+            var articles = await Context.Articles
+                .Where(a => a.Author.Id == authorId)
+                .ToListAsync();
+
+            var recentComments = articles
+                .SelectMany(a => a.RecentComments)
+                .ToList();
+
+            var orderedRecentComments = recentComments.Select(c => new
+            {
+                CommentId = c.Id,
+                ArticleId = c.Id,
+                c.PostedAt
+            }).OrderByDescending(a => a.PostedAt).ToList();
+
+            var latestCommentId = string.Empty;
+            var latestCommentArticleId = string.Empty;
+            var latestCommentPostedAt = DateTime.MinValue;
+
+            if (orderedRecentComments.Count > 0)
+            {
+                latestCommentId = orderedRecentComments[0].CommentId;
+                latestCommentArticleId = orderedRecentComments[0].ArticleId;
+                latestCommentPostedAt = orderedRecentComments[0].PostedAt;
+            }
+
+            var articleIds = articleMetrics.Select(a => a.Id).ToList();
+            var startOfTodayUtc = DateTime.UtcNow.Date;
+
+            var likesToday = await Context.Likes
+                .Where(l => articleIds.Contains(l.ArticleId)
+                            && l.LikedAt >= startOfTodayUtc
+                            && l.IsLiked)
+                .CountAsync();
+
+            stats.RecentActivity = new RecentActivity
+            {
+                LatestCommentId = latestCommentId,
+                LatestCommentArticleId = latestCommentArticleId,
+                LatestCommentPostedAt = latestCommentPostedAt,
+                LikesToday = likesToday
+            };
+
+            stats.TotalLikes = articleMetrics.Sum(a => a.Likes);
+            stats.TotalComments = articleMetrics.Sum(a => a.CommentsCount);
+            stats.PublishedArticlesCount = articleMetrics.Count;
+
+            var validArticlesForEngagement = articleMetrics.Where(a => a.Views > 0).ToList();
+
+            var engagementRate = validArticlesForEngagement.Count != 0
+                ? validArticlesForEngagement.Average(a => (float)(a.Likes + a.CommentsCount) / a.Views)
+                : 0;
+
+            stats.EngagementRate = engagementRate;
+
+            return stats;
+        }, "retrieving author stats");
     }
 }

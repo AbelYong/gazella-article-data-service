@@ -4,6 +4,8 @@ using ArticleService.Services.DataPackages;
 using ArticleService.Services.Exceptions;
 using ArticleService.Services.MessageValidators;
 using Grpc.Core;
+using RecentActivity = ArticleService.Protos.Article.RecentActivity;
+using TopAuthorArticle = ArticleService.Protos.Article.TopAuthorArticle;
 
 namespace ArticleService.Services;
 
@@ -29,7 +31,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
         request.Id = request.Id.Trim();
         if (!Guid.TryParse(request.Id, out _))
         {
-            throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided Id is not a valid UUID"));
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided AuthorId is not a valid UUID"));
         }
         
         var articles = await articleRepository.GetArticlesByAuthorId(request.Id);
@@ -55,7 +57,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
         request.Id = request.Id.Trim();
         if (!Guid.TryParse(request.Id, out _))
         {
-            throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided Id is not a valid UUID"));
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided ArticleId is not a valid UUID"));
         }
 
         var article = await articleRepository.GetArticleById(request.Id);
@@ -155,7 +157,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
         request.ArticleId = request.ArticleId.Trim();
         if (!Guid.TryParse(request.ArticleId, out _))
         {
-            throw new GazellaValidationException("Provided Id is not a valid UUID");
+            throw new GazellaValidationException("Provided ArticleId is not a valid UUID");
         }
 
         var toRemove = await articleRepository.RemoveArticleAsync(request.ArticleId);
@@ -170,5 +172,40 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             Status = removed.Status.ToString(),
             Message = $"Article {removed.Id} has been removed."
         };
+    }
+
+    public override async Task<GetAuthorStatsResponse> GetAuthorStats(GetAuthorStatsRequest request, ServerCallContext context)
+    {
+        request.AuthorId = request.AuthorId.Trim();
+        if (!Guid.TryParse(request.AuthorId, out _))
+        {
+            throw new GazellaValidationException("Provided AuthorId is not a valid UUID");
+        }
+
+        var stats = await articleRepository.GetAuthorStatsAsync(request.AuthorId);
+
+        var response = new GetAuthorStatsResponse();
+        
+        response.TopArticles.AddRange(stats.TopAuthorArticles.Select(a => new TopAuthorArticle
+        {
+            Id = a.Id,
+            Title = a.Title,
+            LikesCount = a.LikeCount,
+            CommentsCount = a.CommentsCount
+        }));
+        response.RecentActivity = new RecentActivity
+        {
+            LatestCommentId = stats.RecentActivity.LatestCommentId,
+            LatestCommentArticleId = stats.RecentActivity.LatestCommentArticleId,
+            LatestCommentPostedAt = stats.RecentActivity.LatestCommentPostedAt != DateTime.MinValue ? 
+                stats.RecentActivity.LatestCommentPostedAt.ToString("O") : "",
+            LikesToday = stats.RecentActivity.LikesToday,
+        };
+        response.PublishedArticlesCount = stats.PublishedArticlesCount;
+        response.TotalComments = stats.TotalComments;
+        response.TotalLikes = stats.TotalLikes;
+        response.EngagementRate = stats.EngagementRate;
+        
+        return response;
     }
 }

@@ -8,4 +8,5 @@ public class Like : ILike
     public required string ArticleId { get; set; }
     public required string AuthorId { get; set; }
     public bool IsLiked { get; set; }
+    public required DateTime LikedAt { get; set; }
 }

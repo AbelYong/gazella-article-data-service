@@ -8,4 +8,5 @@ public class NullLike : ILike
     public string ArticleId => Guid.Empty.ToString();
     public string AuthorId => Guid.Empty.ToString();
     public bool IsLiked => false;
+    public DateTime LikedAt => DateTime.MinValue;
 }
