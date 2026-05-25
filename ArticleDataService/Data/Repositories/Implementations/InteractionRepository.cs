@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArticleService.Data.Repositories.Implementations;
 
-public class InteractionRepository(GazellaDbContext context, ILogger<BaseRepository> logger)
+public class InteractionRepository(GazellaDbContext context, ILogger<InteractionRepository> logger)
     : BaseRepository(context, logger), IInteractionRepository
 {
     public async Task<IRecentComment> AddCommentAsync(string articleId, Comment comment)

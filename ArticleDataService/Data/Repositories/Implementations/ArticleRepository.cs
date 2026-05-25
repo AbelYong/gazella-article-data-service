@@ -1,40 +1,28 @@
-using ArticleService.Data.Exceptions;
 using ArticleService.Entities;
 using ArticleService.Entities.Interfaces;
 using ArticleService.Entities.NullEntities;
 using ArticleService.Services.DataPackages;
 using ArticleService.Services.Domain;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
 
 namespace ArticleService.Data.Repositories.Implementations;
 
-public class ArticleRepository(GazellaDbContext context, ILogger<CategoryRepository> logger)
+public class ArticleRepository(GazellaDbContext context, ILogger<ArticleRepository> logger)
     : BaseRepository(context, logger), IArticleRepository
 {
-    public async Task<bool> VerifyArticleExists(string id)
+    public async Task<bool> VerifyArticleExistsAsync(string id)
     {
-        try
+        return await ExecuteDbOperationAsync(async () =>
         {
             var article = await Context.Articles.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
 
             return article != null;
-        }
-        catch (Exception ex) when (ex.InnerException is MongoConnectionException || ex is TimeoutException)
-        {
-            logger.LogError(ex, "Connection exception while retrieving article {Ex}", ex.Message);
-            throw new GazellaDbException(ex.Message, ex);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected exception while retrieving article {Ex}", ex.Message);
-            throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
-        }
+        }, "verifying article exists");
     }
 
-    public async Task<IEnumerable<IArticle>> GetArticlesByAuthorId(string authorId)
+    public async Task<IEnumerable<IArticle>> GetArticlesByAuthorIdAsync(string authorId)
     {
-        try
+        return await ExecuteDbOperationAsync<IEnumerable<IArticle>>(async () =>
         {
             var articles = await Context.Articles
                 .Where(a => a.Author.Id == authorId).AsNoTracking().ToListAsync();
@@ -44,22 +32,12 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
                 return articles;
             }
             return new List<NullArticle>();
-        }
-        catch (Exception ex) when (ex.InnerException is MongoConnectionException || ex is TimeoutException)
-        {
-            logger.LogError(ex, "Connection exception while querying articles by author Id {Ex}", ex.Message);
-            throw new GazellaDbException(ex.Message, ex);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected exception while querying articles by author Id: {Ex}", ex.Message);
-            throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
-        }
+        }, "retrieving articles by author id");
     }
 
-    public async Task<IArticle> GetArticleById(string id)
+    public async Task<IArticle> GetArticleByIdAsync(string id)
     {
-        try
+        return await ExecuteDbOperationAsync<IArticle>(async () =>
         {
             var article = await Context.Articles.FirstOrDefaultAsync(a => a.Id == id);
 
@@ -75,17 +53,7 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
             }
 
             return article;
-        }
-        catch (Exception ex) when (ex.InnerException is MongoConnectionException || ex is TimeoutException)
-        {
-            logger.LogError(ex, "Connection exception while retrieving article by Id {Ex}", ex.Message);
-            throw new GazellaDbException(ex.Message, ex);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected exception while retrieving article by Id: {Ex}", ex.Message);
-            throw new GazellaDbException(ex.Message, ex.InnerException ?? ex);
-        }
+        }, "retrieving article by id");
     }
 
     public async Task<PaginationResult<IArticle>> SearchArticlesAsync(ArticleSearch search, int offset, int pageSize)
@@ -188,6 +156,7 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
             var stats = new AuthorStats { TopAuthorArticles = new List<TopAuthorArticle>() };
 
             var articleMetrics = await Context.Articles
+                .AsNoTracking()
                 .Where(a => a.Author.Id == authorId && a.Status == ArticleStatus.Published)
                 .OrderByDescending(a => a.Metrics.Likes)
                 .Select(a => new
@@ -215,6 +184,7 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
 
             var articles = await Context.Articles
                 .Where(a => a.Author.Id == authorId)
+                .AsNoTracking()
                 .ToListAsync();
 
             var recentComments = articles
@@ -270,5 +240,29 @@ public class ArticleRepository(GazellaDbContext context, ILogger<CategoryReposit
 
             return stats;
         }, "retrieving author stats");
+    }
+    
+    public async Task<IEnumerable<IArticle>> GetFeaturedArticlesAsync(int amount)
+    {
+        return await ExecuteDbOperationAsync(async () =>
+        {
+            var featured = await Context.Articles
+                .OrderByDescending(a => a.PublishedAt)
+                .Take(amount)
+                .AsNoTracking()
+                .ToListAsync();
+            
+            if (featured.Count  == 0)
+            {
+                return new List<NullArticle>();
+            }
+
+            featured = featured.OrderByDescending(a => a.Metrics.Views)
+                .ThenByDescending(a => a.Metrics.CommentsCount)
+                .ThenByDescending(a => a.Metrics.Likes)
+                .ToList();
+
+            return featured.Cast<IArticle>();
+        }, "retrieving feature articles");
     }
 }

@@ -14,7 +14,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
 {
     public override async Task<GetCategoriesResponse> GetCategories(GetCategoriesRequest request, ServerCallContext context)
     {
-        var categories = await categoryRepository.GetCategories();
+        var categories = await categoryRepository.GetCategoriesAsync();
 
         var response = new GetCategoriesResponse();
         response.Categories.AddRange(categories.Select(c => new Category
@@ -34,7 +34,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided AuthorId is not a valid UUID"));
         }
         
-        var articles = await articleRepository.GetArticlesByAuthorId(request.Id);
+        var articles = await articleRepository.GetArticlesByAuthorIdAsync(request.Id);
 
         var response = new GetMyArticlesResponse();
         
@@ -60,7 +60,7 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Provided ArticleId is not a valid UUID"));
         }
 
-        var article = await articleRepository.GetArticleById(request.Id);
+        var article = await articleRepository.GetArticleByIdAsync(request.Id);
 
         if (article is not Entities.Article foundArticle)
         {
@@ -206,6 +206,37 @@ public class ArticleService(IArticleRepository articleRepository, ICategoryRepos
         response.TotalLikes = stats.TotalLikes;
         response.EngagementRate = stats.EngagementRate;
         
+        return response;
+    }
+
+    public override async Task<GetFeaturedArticlesResponse> GetFeaturedArticles(GetFeaturedArticlesRequest request, ServerCallContext context)
+    {
+        const int minFeatured = 3;
+        const int maxFeatured = 10;
+        
+        var requestedAmount = request.RequestedAmount;
+
+        switch (requestedAmount)
+        {
+            case < minFeatured:
+                throw new GazellaValidationException($"Requested amount of featured must be greater or equal to {minFeatured}");
+            case > maxFeatured:
+                throw new GazellaValidationException($"Only up to {maxFeatured} featured articles may be requested. Requested: {requestedAmount}");
+        }
+
+        var featuredArticles = await articleRepository.GetFeaturedArticlesAsync(requestedAmount);
+
+        var response = new GetFeaturedArticlesResponse();
+        response.FeaturedArticles.AddRange(featuredArticles.Select(a => new FeaturedArticle
+        {
+            Id = a.Id,
+            Title = a.Title,
+            CoverUri = a.CoverUri,
+            AuthorId = a.AuthorId,
+            AuthorName = a.AuthorName,
+            AuthorPfpUri = a.AuthorProfilePictureUri,
+            Summary = a.Summary
+        }));
         return response;
     }
 }

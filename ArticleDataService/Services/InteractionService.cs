@@ -42,7 +42,7 @@ public class InteractionService(IInteractionRepository interactionRepository, IA
     {
         InteractionValidator.ValidateDeleteCommentRequest(request);
 
-        var articleExists = await articleRepository.VerifyArticleExists(request.ArticleId);
+        var articleExists = await articleRepository.VerifyArticleExistsAsync(request.ArticleId);
 
         if (!articleExists)
         {
@@ -101,7 +101,7 @@ public class InteractionService(IInteractionRepository interactionRepository, IA
     {
         InteractionValidator.ValidateLikeArticleRequest(request);
 
-        var existingArticle = await articleRepository.GetArticleById(request.ArticleId);
+        var existingArticle = await articleRepository.GetArticleByIdAsync(request.ArticleId);
 
         if (existingArticle is not Entities.Article)
         {
@@ -137,7 +137,7 @@ public class InteractionService(IInteractionRepository interactionRepository, IA
     {
         InteractionValidator.ValidateRevokeLikeRequest(request);
         
-        var existingArticle = await articleRepository.GetArticleById(request.ArticleId);
+        var existingArticle = await articleRepository.GetArticleByIdAsync(request.ArticleId);
 
         if (existingArticle is not Entities.Article)
         {
