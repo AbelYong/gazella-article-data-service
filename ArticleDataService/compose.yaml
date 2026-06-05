@@ -79,6 +79,8 @@
     depends_on:
       mongodb:
         condition: service_healthy
+      mongodb-setup:
+        condition: service_completed_successfully
 
 volumes:
   mongodb_data:
