@@ -49,7 +49,14 @@
     command: >
       bash -c "
       sleep 5;
-      mongosh 'mongodb://${MONGO_ROOT}:${MONGO_ROOT_PASS}@mongodb:27017/?authSource=${MONGO_ROOT}' --eval 'rs.initiate({ _id: \"rs0\", members: [ { _id: 0, host: \"mongodb:27017\" } ] })'
+      mongosh 'mongodb://${MONGO_ROOT}:${MONGO_ROOT_PASS}@mongodb:27017/?authSource=${MONGO_ROOT}' --eval '
+      try { 
+        rs.status(); 
+        console.log(\"Replica set already initialized.\"); 
+      } catch(err) { 
+        rs.initiate({ _id: \"rs0\", members: [ { _id: 0, host: \"mongodb:27017\" } ] }); 
+        console.log(\"Replica set initiated.\"); 
+      }'
       "
     networks:
       - gazella-net
